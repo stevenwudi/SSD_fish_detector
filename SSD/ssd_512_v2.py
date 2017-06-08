@@ -162,26 +162,52 @@ def SSD512v2(input_shape, num_classes=21):
                      strides=(2, 2),
                      activation='relu')(conv8_1)
 
+    # Block 9
+    conv9_1 = Conv2D(128, (1, 1),
+                    name='conv9_1',
+                    padding='same',
+                    activation='relu')(conv8_2)
+
+    conv9_2 = Conv2D(256, (3, 3),
+                     name='conv9_2',
+                     padding='same',
+                     activation='relu',
+                     strides=(2, 2))(conv9_1)
+
+    # Block 10
+    conv10_1 = Conv2D(128, (1, 1),
+                      name='conv10_1',
+                      padding='same',
+                      activation='relu')(conv9_2)
+
+    conv10_2 = Conv2D(256, (3, 3),
+                      name='conv10_2',
+                      strides=(2, 2),
+                      padding='same',
+                      activation='relu')(conv10_1)
+
+
     # Last Pool
-    pool6 = GlobalAveragePooling2D(name='pool6')(conv8_2)
+    pool6 = GlobalAveragePooling2D(name='pool6')(conv10_2)
 
     # Prediction from conv4_3
-    num_priors = 3
+    num_priors = 4
     img_size = (input_shape[1], input_shape[0])
     name = 'conv4_3_norm_mbox_conf'
     if num_classes != 21:
         name += '_{}'.format(num_classes)
 
     conv4_3_norm = Normalize(20, name='conv4_3_norm')(conv4_3)
+    # we need to modify the name in order to load pre-trained weights properly
     conv4_3_norm_mbox_loc = Conv2D(num_priors * 4, (3, 3),
-                                   name='conv4_3_norm_mbox_loc',
+                                   name='conv4_3_norm_mbox_loc_prior_4',
                                    padding='same')(conv4_3_norm)
     conv4_3_norm_mbox_loc_flat = Flatten(name='conv4_3_norm_mbox_loc_flat')(conv4_3_norm_mbox_loc)
     conv4_3_norm_mbox_conf = Conv2D(num_priors * num_classes, (3, 3),
                                     name=name,
                                     padding='same')(conv4_3_norm)
     conv4_3_norm_mbox_conf_flat = Flatten(name='conv4_3_norm_mbox_conf_flat')(conv4_3_norm_mbox_conf)
-    conv4_3_norm_mbox_priorbox = PriorBox(img_size, 30.0,
+    conv4_3_norm_mbox_priorbox = PriorBox(img_size, 35.84,  max_size=76.8,
                                           name='conv4_3_norm_mbox_priorbox',
                                           aspect_ratios=[2],
                                           variances=[0.1, 0.1, 0.2, 0.2])(conv4_3_norm)
@@ -200,9 +226,9 @@ def SSD512v2(input_shape, num_classes=21):
                           name='fc7_mbox_loc',
                           padding='same')(fc7)
     fc7_mbox_loc_flat = Flatten(name='fc7_mbox_loc_flat')(fc7_mbox_loc)
-    fc7_mbox_priorbox = PriorBox(img_size, 60.0,
+    fc7_mbox_priorbox = PriorBox(img_size, 76.8,
                                  name='fc7_mbox_priorbox',
-                                 max_size=114.0,
+                                 max_size=153.6,
                                  aspect_ratios=[2, 3],
                                  variances=[0.1, 0.1, 0.2, 0.2]
                                  )(fc7)
@@ -220,8 +246,8 @@ def SSD512v2(input_shape, num_classes=21):
                               name='conv6_2_mbox_loc',
                               padding='same')(conv6_2)
     conv6_2_mbox_loc_flat = Flatten(name='conv6_2_mbox_loc_flat')(conv6_2_mbox_loc)
-    conv6_2_mbox_priorbox = PriorBox(img_size, 114.0,
-                                     max_size=168.0,
+    conv6_2_mbox_priorbox = PriorBox(img_size, 153.6,
+                                     max_size=230.4,
                                      aspect_ratios=[2, 3],
                                      variances=[0.1, 0.1, 0.2, 0.2],
                                      name='conv6_2_mbox_priorbox')(conv6_2)
@@ -238,8 +264,8 @@ def SSD512v2(input_shape, num_classes=21):
                               padding='same',
                               name='conv7_2_mbox_loc')(conv7_2)
     conv7_2_mbox_loc_flat = Flatten(name='conv7_2_mbox_loc_flat')(conv7_2_mbox_loc)
-    conv7_2_mbox_priorbox = PriorBox(img_size, 168.0,
-                                     max_size=222.0,
+    conv7_2_mbox_priorbox = PriorBox(img_size, 230.4,
+                                     max_size=307.2,
                                      aspect_ratios=[2, 3],
                                      variances=[0.1, 0.1, 0.2, 0.2],
                                      name='conv7_2_mbox_priorbox')(conv7_2)
@@ -256,14 +282,32 @@ def SSD512v2(input_shape, num_classes=21):
                               padding='same',
                               name='conv8_2_mbox_loc')(conv8_2)
     conv8_2_mbox_loc_flat = Flatten(name='conv8_2_mbox_loc_flat')(conv8_2_mbox_loc)
-    conv8_2_mbox_priorbox = PriorBox(img_size, 222.0,
-                                     max_size=276.0,
+    conv8_2_mbox_priorbox = PriorBox(img_size, 307.2,
+                                     max_size=384,
                                      aspect_ratios=[2, 3],
                                      variances=[0.1, 0.1, 0.2, 0.2],
                                      name='conv8_2_mbox_priorbox')(conv8_2)
 
+    # Prediction from conv9_2
+    num_priors = 4
+    conv9_2_mbox_loc = Conv2D(num_priors * 4, (3, 3),
+               padding='same',
+               name='conv9_2_mbox_loc')(conv9_2)
+
+    conv9_2_mbox_loc_flat = Flatten(name='conv9_2_mbox_loc_flat')(conv9_2_mbox_loc)
+    name = 'conv9_2_mbox_conf'
+    if num_classes != 21:
+        name += '_{}'.format(num_classes)
+
+    conv9_2_mbox_conf = Conv2D(num_priors * num_classes, (3, 3),
+                               padding='same',
+                               name=name)(conv9_2)
+    conv9_2_mbox_conf_flat = Flatten(name='conv9_2_mbox_conf_flat')(conv9_2_mbox_conf)
+    conv9_2_mbox_priorbox = PriorBox(img_size, 384.0, max_size=460.8, aspect_ratios=[2],
+                        variances=[0.1, 0.1, 0.2, 0.2],
+                        name='conv9_2_mbox_priorbox')(conv9_2)
     # Prediction from pool6
-    num_priors = 6
+    num_priors = 4
     name = 'pool6_mbox_conf_flat'
     if num_classes != 21:
         name += '_{}'.format(num_classes)
@@ -271,11 +315,13 @@ def SSD512v2(input_shape, num_classes=21):
         target_shape = (1, 1, 256)
     else:
         target_shape = (256, 1, 1)
-    pool6_mbox_loc_flat = Dense(num_priors * 4, name='pool6_mbox_loc_flat')(pool6)
+
+    # we need to modify the name in order to load pre-trained weights properly
+    pool6_mbox_loc_flat = Dense(num_priors * 4, name='pool6_mbox_loc_flat_prior_4')(pool6)
     pool6_mbox_conf_flat = Dense(num_priors * num_classes, name=name)(pool6)
     pool6_reshaped = Reshape(target_shape,
                              name='pool6_reshaped')(pool6)
-    pool6_mbox_priorbox = PriorBox(img_size, 276.0, max_size=330.0, aspect_ratios=[2, 3],
+    pool6_mbox_priorbox = PriorBox(img_size, 460.8, max_size=537.6, aspect_ratios=[2],
                                    variances=[0.1, 0.1, 0.2, 0.2],
                                    name='pool6_mbox_priorbox')(pool6_reshaped)
     # Gather all predictions
@@ -284,6 +330,7 @@ def SSD512v2(input_shape, num_classes=21):
                             conv6_2_mbox_loc_flat,
                             conv7_2_mbox_loc_flat,
                             conv8_2_mbox_loc_flat,
+                            conv9_2_mbox_loc_flat,
                             pool6_mbox_loc_flat],
                            axis=1,
                            name='mbox_loc')
@@ -292,6 +339,7 @@ def SSD512v2(input_shape, num_classes=21):
                              conv6_2_mbox_conf_flat,
                              conv7_2_mbox_conf_flat,
                              conv8_2_mbox_conf_flat,
+                             conv9_2_mbox_conf_flat,
                              pool6_mbox_conf_flat],
                             axis=1,
                             name='mbox_conf')
@@ -300,6 +348,7 @@ def SSD512v2(input_shape, num_classes=21):
                                  conv6_2_mbox_priorbox,
                                  conv7_2_mbox_priorbox,
                                  conv8_2_mbox_priorbox,
+                                 conv9_2_mbox_priorbox,
                                  pool6_mbox_priorbox],
                                 axis=1,
                                 name='mbox_priorbox')
@@ -307,12 +356,10 @@ def SSD512v2(input_shape, num_classes=21):
         num_boxes = mbox_loc._keras_shape[-1] // 4
     elif hasattr(mbox_loc, 'int_shape'):
         num_boxes = K.int_shape(mbox_loc)[-1] // 4
-    mbox_loc = Reshape((num_boxes, 4),
-                       name='mbox_loc_final')(mbox_loc)
+    mbox_loc = Reshape((num_boxes, 4), name='mbox_loc_final')(mbox_loc)
     mbox_conf = Reshape((num_boxes, num_classes),
                         name='mbox_conf_logits')(mbox_conf)
-    mbox_conf = Activation('softmax',
-                           name='mbox_conf_final')(mbox_conf)
+    mbox_conf = Activation('softmax', name='mbox_conf_final')(mbox_conf)
     predictions = concatenate([mbox_loc,
                                mbox_conf,
                                mbox_priorbox],

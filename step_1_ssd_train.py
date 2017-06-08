@@ -49,6 +49,7 @@ def main():
 
     model = SSD300v2(input_shape, num_classes=NUM_CLASSES)
     model.load_weights('./SSD/weights_SSD300.hdf5', by_name=True)
+    model.summary()
 
     freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
               'conv2_1', 'conv2_2', 'pool2',

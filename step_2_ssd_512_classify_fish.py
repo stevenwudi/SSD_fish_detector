@@ -9,7 +9,7 @@ import pickle
 import random
 import os
 import numpy as np
-from SSD.ssd_v2 import SSD300v2
+from SSD.ssd_512_v2 import SSD512v2
 from SSD.ssd_utils import BBoxUtility
 
 
@@ -32,8 +32,8 @@ def main():
     NUM_CLASSES = 7 + 1
     fish_names = ['OTHER', 'ALB', 'BET', 'DOL', 'LAG', 'SHARK', 'YFT']
 
-    input_shape = (300, 300, 3)
-    priors = pickle.load(open('./SSD/prior_boxes_ssd300.pkl', 'rb'))
+    input_shape = (512, 512, 3)
+    priors = pickle.load(open('./SSD/prior_boxes_ssd512.pkl', 'rb'))
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
     gt = pickle.load(open('./data/gt.pkl', 'rb'))
@@ -42,13 +42,11 @@ def main():
     random.shuffle(keys)
 
     num_train = int(round(0.9 * len(keys)))
-    train_keys = keys[:num_train]
     val_keys = keys[num_train:]
-    num_val = len(val_keys)
 
     ### load model ###
-    model = SSD300v2(input_shape, num_classes=NUM_CLASSES)
-    model.load_weights('./checkpoints_classification/weights.28-0.99.hdf5', by_name=True)
+    model = SSD512v2(input_shape, num_classes=NUM_CLASSES)
+    model.load_weights('./checkpoints_classification/weights_512.17-0.82.hdf5', by_name=True)
 
     inputs = []
     images = []
@@ -58,9 +56,8 @@ def main():
     for i in range(20):
         img_path = val_keys[i + add_num]
         if os.path.isfile(img_path):
-            #img_path = train_keys[i+add_num]
             gt_result.append(gt[val_keys[i+add_num]])
-            img = image.load_img(img_path, target_size=(300, 300))
+            img = image.load_img(img_path, target_size=(512, 512))
             img = image.img_to_array(img)
             images.append(img)
             inputs.append(img.copy())
